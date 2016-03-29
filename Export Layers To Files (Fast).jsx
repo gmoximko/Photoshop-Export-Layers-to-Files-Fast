@@ -109,10 +109,11 @@ const ExportLayerTarget = {
 	ALL_LAYERS: 1,
 	VISIBLE_LAYERS: 2,
 	SELECTED_LAYERS: 3,		// Export selection, leave the rest as is, visibility for parent groups will be forced.
-
+	SELECTED_GROUPS: 4,
+	
 	values: function()
 	{
-		return [this.ALL_LAYERS, this.VISIBLE_LAYERS, this.SELECTED_LAYERS];
+		return [this.ALL_LAYERS, this.VISIBLE_LAYERS, this.SELECTED_LAYERS, this.SELECTED_GROUPS];
 	},
 	
 	forIndex: function(index) 
@@ -140,6 +141,8 @@ const DEFAULT_SETTINGS = {
 	trim: app.stringIDToTypeID("trim"),
 	exportBackground: app.stringIDToTypeID("exportBackground"),
 	fileType: app.stringIDToTypeID("fileType"),
+	layerFilter: app.stringIDToTypeID("layerFilter"),
+	groupFilter: app.stringIDToTypeID("groupFilter"),
 };
 
 //
@@ -190,6 +193,8 @@ function main()
 	prefs.replaceSpaces = true;
 	prefs.bgLayer = false;
 	prefs.trim = TrimPrefType.DONT_TRIM;
+	prefs.layerFilter = "";
+	prefs.groupFilter = "";
 
 	userCancelled = false;
 
@@ -311,101 +316,60 @@ function exportLayers(exportLayerTarget, progressBarWindow)
 		}
 	}
 	else {
-		// Single trim of all layers combined.
-		if (prefs.trim == TrimPrefType.COMBINED) {
-			const UPDATE_NUM = 20;
-			if (progressBarWindow) {
-				var stepCount = (exportLayerTarget == ExportLayerTarget.ALL_LAYERS) ? count / UPDATE_NUM + 1 : 1;
-				showProgressBar(progressBarWindow, "Trimming...", stepCount);
-			}
-
-			if (exportLayerTarget == ExportLayerTarget.ALL_LAYERS) {
-				// For combined trim across all layers, make all layers visible.
-				for (var i = 0; i < count; ++i) {
-					makeVisible(layersToExport[i]);
-
-					if (progressBarWindow && (i % UPDATE_NUM == 0)) {
-						updateProgressBar(progressBarWindow);
-						repaintProgressBar(progressBarWindow);
-						if (userCancelled) {
-							progressBarWindow.hide();
-							return retVal;
-						}
-					}
-				}
-			}
-
-			if (prefs.bgLayer) {
-				layersToExport[count].layer.visible = false;
-			}
-
-			doc.trim(TrimType.TRANSPARENT);
-		}
-
 		if (progressBarWindow) {
 			showProgressBar(progressBarWindow, "Exporting 1 of " + count + "...", count);
 		}
-
-		// Turn off all layers when exporting all layers - even seemingly invisible ones.
-		// When visibility is switched, the parent group becomes visible and a previously invisible child may become visible by accident.
-		for (var i = 0; i < count; ++i) {
-			layersToExport[i].layer.visible = false;
-		}
-		if (prefs.bgLayer) {
-			makeVisible(layersToExport[count]);
-		}
-
-		var countDigits = 0;
-		if (prefs.naming != FileNameType.AS_LAYERS) {
-			countDigits = ("" + count).length;
-		}
-
-		// export layers
-		for (var i = 0; i < count; ++i) {
-			var layer = layersToExport[i].layer;
-
-			var fileName;
-			switch (prefs.naming) {
-
-			case FileNameType.AS_LAYERS_NO_EXT:
-				fileName = makeFileNameFromLayerName(layer, true);
-				break;
-
-			case FileNameType.AS_LAYERS:
-				fileName = makeFileNameFromLayerName(layer, false);
-				break;
-
-			case FileNameType.INDEX_ASC:
-				fileName = makeFileNameFromIndex(count - i, countDigits);
-				break;
-
-			case FileNameType.INDEX_DESC:
-				fileName = makeFileNameFromIndex(i + 1, countDigits);
-				break;
+		
+		var layersToExportGroupedByName = groupBy(layersToExport, function(item)
+		{
+		  return item.layer.name.split(/[\\\/\|<>\ \_\,\.\-]/)[0];
+		});
+		
+		for (var j = 0; j < layersToExportGroupedByName.length; ++j) {
+			var activeLayers = layersToExportGroupedByName[j];
+			
+			// Single trim of all layers combined.
+			const UPDATE_NUM = 20;
+			if (progressBarWindow) {
+				var stepCount = count / UPDATE_NUM + 1;
+				showProgressBar(progressBarWindow, "Trimming...", stepCount);
 			}
+			
+			// Turn off all layers when exporting all layers - even seemingly invisible ones.
+			// When visibility is switched, the parent group becomes visible and a previously invisible child may become visible by accident.
+			for (var i = 0; i < count; ++i) {
+				layersToExport[i].layer.visible = indexOf(activeLayers, layersToExport[i]) > -1;
+				if (progressBarWindow && (i % UPDATE_NUM == 0)) {
+					updateProgressBar(progressBarWindow);
+					repaintProgressBar(progressBarWindow);
+					if (userCancelled) {
+						progressBarWindow.hide();
+						return retVal;
+					}
+				}
+			}
+			
+			if (prefs.bgLayer) {
+				layersToExport[count].layer.visible = false;
+			}
+			//Trim
+			doc.trim(TrimType.TRANSPARENT);
+			
+			
+			if (prefs.bgLayer) {	
+				makeVisible(layersToExport[count]);
+			}
+			
+			
+			var layer = activeLayers[0].layer;
+			
+			var fileName = makeValidFileName(layer.name.split(/[\\\/\|<>\ \_\,\.\-]/)[0], prefs.replaceSpaces);
+			fileName = getUniqueFileName(fileName);
 
 			if (fileName) {
-				if ((prefs.trim != TrimPrefType.INDIVIDUAL) || ((layer.bounds[0] < layer.bounds[2]) && ((layer.bounds[1] < layer.bounds[3])))) { // skip empty layers when trimming
-					makeVisible(layersToExport[i]);
-
-					if (prefs.trim == TrimPrefType.INDIVIDUAL) {
-						try {
-							doc.crop(layer.bounds);
-						}
-						catch (e) {
-							doc.trim(TrimType.TRANSPARENT);
-						}
-					}
-
-					saveImage(fileName);
-					++retVal.count;
-
-					if (prefs.trim == TrimPrefType.INDIVIDUAL) {
-						undo(doc);
-					}
-
-					layer.visible = false;
-				}
+				saveImage(fileName);
+				++retVal.count;
+				//if (prefs.trim == TrimPrefType.INDIVIDUAL) { undo(doc); }
 			}
 			else {
 				retVal.error = true;
@@ -749,6 +713,11 @@ function showDialog()
 		this.text = makeValidFileName(this.text, prefs.replaceSpaces);
 	};
 
+	// layer filter
+	//dlg.funcArea.content.grpLayerFilter.editPrefix.onChange = function() {
+	//	this.text = this.text;
+	//};
+
 	// file naming options
 	dlg.funcArea.content.grpNaming.drdNaming.selection = 0;
 	dlg.funcArea.content.grpLetterCase.drdLetterCase.selection = 0;
@@ -770,6 +739,16 @@ function showDialog()
 		prefs.outputPrefix = dlg.funcArea.content.grpPrefix.editPrefix.text;
 		if (prefs.outputPrefix.length > 0) {
 			prefs.outputPrefix += " ";
+		}
+
+		prefs.layerFilter = dlg.funcArea.content.grpLayerFilter.editPrefix.text;
+		if (prefs.layerFilter.length > 0) {
+			prefs.layerFilter += " ";
+		}
+
+		prefs.groupFilter = dlg.funcArea.content.grpGroupFilter.editPrefix.text;
+		if (prefs.groupFilter.length > 0) {
+			prefs.groupFilter += " ";
 		}
 
 		prefs.naming = FileNameType.forIndex(dlg.funcArea.content.grpNaming.drdNaming.selection.index);
@@ -852,6 +831,12 @@ function applySettings(dlg, formatOpts)
 		grpPrefix.editPrefix.text = settings.outputPrefix;
 		grpPrefix.editPrefix.notify("onChange");
 		
+		grpLayerFilter.editPrefix.text = settings.layerFilter;
+		grpLayerFilter.editPrefix.notify("onChange");
+
+		grpGroupFilter.editPrefix.text = settings.groupFilter;
+		grpGroupFilter.editPrefix.notify("onChange");
+		
 		var drdTrimIdx = TrimPrefType.getIndex(settings.trim);
 		grpTrim.drdTrim.selection = (drdTrimIdx >= 0) ? drdTrimIdx : 0;
 		
@@ -905,6 +890,8 @@ function saveSettings(dlg, formatOpts)
 		desc.putBoolean(DEFAULT_SETTINGS.exportBackground, cbBgLayer.value);
 		desc.putString(DEFAULT_SETTINGS.fileType, formatOpts[grpFileType.drdFileType.selection.index].opt.type);
 
+		desc.putString(DEFAULT_SETTINGS.layerFilter, grpLayerFilter.editPrefix.text);
+		desc.putString(DEFAULT_SETTINGS.groupFilter, grpGroupFilter.editPrefix.text);		
 		// per file format
 		
 		for (var i = 0; i < formatOpts.length; ++i) {
@@ -942,6 +929,9 @@ function getSettings(formatOpts)
 			trim: desc.getInteger(DEFAULT_SETTINGS.trim), 
 			exportBackground: desc.getBoolean(DEFAULT_SETTINGS.exportBackground),
 			fileType: desc.getString(DEFAULT_SETTINGS.fileType),
+
+			layerFilter: desc.getString(DEFAULT_SETTINGS.layerFilter),
+			groupFilter: desc.getString(DEFAULT_SETTINGS.groupFilter),
 
 			// per file format filled below
 			
@@ -2272,4 +2262,19 @@ function defineProfilerMethods()
 		output += padder(duration.getUTCMilliseconds(), 3);
 		return output;
 	};
+}
+
+function groupBy( array , f )
+{
+  var groups = {};
+  array.forEach( function( o )
+  {
+    var group = JSON.stringify( f(o) );
+    groups[group] = groups[group] || [];
+    groups[group].push( o );  
+  });
+  return Object.keys(groups).map( function( group )
+  {
+    return groups[group]; 
+  })
 }
