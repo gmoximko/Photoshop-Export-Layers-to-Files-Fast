@@ -319,8 +319,11 @@ function exportLayers(exportLayerTarget, progressBarWindow)
 		if (progressBarWindow) {
 			showProgressBar(progressBarWindow, "Exporting 1 of " + count + "...", count);
 		}
-		
-		var layersToExportGroupedByName = groupBy(layersToExport, function(item)
+		var filteredLayers = removeIf(layersToExport, function(item)
+		{
+		  return item.layer.name.substring(0,1) == "_";
+		});
+		var layersToExportGroupedByName = groupBy(filteredLayers, function(item)
 		{
 		  return item.layer.name.split(/[\\\/\|<>\ \_\,\.\-]/)[0];
 		});
@@ -2189,6 +2192,21 @@ function formatString(text)
 	});
 }
 
+
+function removeIf(array, fun)
+{
+	var res = [];
+	for (var i = 0; i < array.length; ++i) {
+		var val = array[i];
+		if (f(val)) {
+			res.push(val);
+		}
+	}
+	
+	return res;
+}
+
+
 function indexOf(array, element)
 {
 	var index = -1;
@@ -2278,3 +2296,4 @@ function groupBy( array , f )
     return groups[group]; 
   })
 }
+
