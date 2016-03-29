@@ -42,6 +42,18 @@ dialog {
 				txtPrefix: StaticText {text: "Output prefix:", preferredSize: [80, 20]},
 				editPrefix: EditText {preferredSize: [230, 20]}
 			},
+			grpLayerFilter: Group {
+				orientation: "row",
+				alignChildren: "left",
+				txtPrefix: StaticText {text: "Layer filter:", preferredSize: [80, 20]},
+				editPrefix: EditText {preferredSize: [230, 20]}
+			},
+			grpGroupFilter: Group {
+				orientation: "row",
+				alignChildren: "left",
+				txtPrefix: StaticText {text: "Group filter:", preferredSize: [80, 20]},
+				editPrefix: EditText {preferredSize: [230, 20]}
+			},
 			grpTrim: Group {
 				orientation: "row",
 				txtTrim: StaticText {text: "Trim:", preferredSize: [80, 20]},
