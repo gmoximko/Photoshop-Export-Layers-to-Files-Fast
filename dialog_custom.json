@@ -21,9 +21,10 @@ dialog {
 			grpLayers: Group {
 				orientation: "row",
 				txtLayers: StaticText {text: "Export:", preferredSize: [80, 20]},
-				radioLayersAll: RadioButton {text: "All layers", preferredSize: [80, 20], value: true},
+				radioLayersAll: RadioButton {text: "All layers", preferredSize: [80, 20]},
 				radioLayersVis: RadioButton {text: "Visible only", preferredSize: [100, 20]},
-				radioLayersSel: RadioButton {text: "Selected group", preferredSize: [120, 20]}
+				radioLayersSel: RadioButton {text: "Selected group", preferredSize: [120, 20]},
+                radioLayersCus: RadioButton {text: "Custom", preferredSize: [140, 20], value: true}
 			},
 			grpNaming: Group {
 				orientation: "row",
@@ -42,22 +43,15 @@ dialog {
 				txtPrefix: StaticText {text: "Output prefix:", preferredSize: [80, 20]},
 				editPrefix: EditText {preferredSize: [230, 20]}
 			},
-			grpLayerFilter: Group {
-				orientation: "row",
-				alignChildren: "left",
-				txtPrefix: StaticText {text: "Layer filter:", preferredSize: [80, 20]},
-				editPrefix: EditText {preferredSize: [230, 20]}
-			},
-			grpGroupFilter: Group {
-				orientation: "row",
-				alignChildren: "left",
-				txtPrefix: StaticText {text: "Group filter:", preferredSize: [80, 20]},
-				editPrefix: EditText {preferredSize: [230, 20]}
-			},
 			grpTrim: Group {
 				orientation: "row",
 				txtTrim: StaticText {text: "Trim:", preferredSize: [80, 20]},
 				drdTrim: DropDownList {preferredSize: [140, 20], properties: {items: ["No", "Each layer", "Combined"]}}
+			},
+            grpSize: Group {
+				orientation: "row",
+				txtSize: StaticText {text: "Image size %:", preferredSize: [80, 20]},
+				drdSize: EditText {preferredSize: [140, 20]}
 			},
 			cbBgLayer: Checkbox {text: "Lowest layer is background", helpTip: "Leaves the bottommost layer on while exporting every other layer one by one. It will act as background."},
 			grpFileType: Group {

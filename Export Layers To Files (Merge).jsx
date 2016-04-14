@@ -1,5 +1,236 @@
-// NAME:
+﻿// NAME:
 // 	Export Layers To Files
+
+//***************************************************************************************
+//EXTENSIONS
+//***************************************************************************************
+if (![].includes) {
+  Array.prototype.includes = function(searchElement/*, fromIndex*/) {
+    'use strict';
+    var O = Object(this);
+    var len = parseInt(O.length) || 0;
+    if (len === 0) {
+      return false;
+    }
+    var n = parseInt(arguments[1]) || 0;
+    var k;
+    if (n >= 0) {
+      k = n;
+    } else {
+      k = len + n;
+      if (k < 0) {
+        k = 0;
+      }
+    }
+    while (k < len) {
+      var currentElement = O[k];
+      if (searchElement === currentElement ||
+         (searchElement !== searchElement && currentElement !== currentElement)
+      ) {
+        return true;
+      }
+      k++;
+    }
+    return false;
+  };
+}
+
+if (!Array.prototype.forEach) {
+
+  Array.prototype.forEach = function(callback, thisArg) {
+
+    var T, k;
+
+    if (this == null) {
+      throw new TypeError(' this is null or not defined');
+    }
+
+    // 1. Let O be the result of calling toObject() passing the
+    // |this| value as the argument.
+    var O = Object(this);
+
+    // 2. Let lenValue be the result of calling the Get() internal
+    // method of O with the argument "length".
+    // 3. Let len be toUint32(lenValue).
+    var len = O.length >>> 0;
+
+    // 4. If isCallable(callback) is false, throw a TypeError
+    //exception. // See: http://es5.github.com/#x9.11
+    if (typeof callback !== "function") {
+      throw new TypeError(callback + ' is not a function');
+    }
+
+    // 5. If thisArg was supplied, let T be thisArg; else let
+    // T be undefined.
+    if (arguments.length > 1) {
+      T = thisArg;
+    }
+
+    // 6. Let k be 0
+    k = 0;
+
+    // 7. Repeat, while k < len
+    while (k < len) {
+
+      var kValue;
+
+      // a. Let Pk be ToString(k).
+      //    This is implicit for LHS operands of the in operator
+      // b. Let kPresent be the result of calling the HasProperty
+      //    internal method of O with argument Pk.
+      //    This step can be combined with c
+      // c. If kPresent is true, then
+      if (k in O) {
+
+        // i. Let kValue be the result of calling the Get internal
+        // method of O with argument Pk.
+        kValue = O[k];
+
+        // ii. Call the Call internal method of callback with T as
+        // the this value and argument list containing kValue, k, and O.
+        callback.call(T, kValue, k, O);
+      }
+      // d. Increase k by 1.
+      k++;
+    }
+    // 8. return undefined
+  };
+}
+
+// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/keys
+if (!Object.keys) {
+  Object.keys = (function() {
+    'use strict';
+    var hasOwnProperty = Object.prototype.hasOwnProperty,
+        hasDontEnumBug = !({ toString: null }).propertyIsEnumerable('toString'),
+        dontEnums = [
+          'toString',
+          'toLocaleString',
+          'valueOf',
+          'hasOwnProperty',
+          'isPrototypeOf',
+          'propertyIsEnumerable',
+          'constructor'
+        ],
+        dontEnumsLength = dontEnums.length;
+
+    return function(obj) {
+      if (typeof obj !== 'object' && (typeof obj !== 'function' || obj === null)) {
+        throw new TypeError('Object.keys called on non-object');
+      }
+
+      var result = [], prop, i;
+
+      for (prop in obj) {
+        if (hasOwnProperty.call(obj, prop)) {
+          result.push(prop);
+        }
+      }
+
+      if (hasDontEnumBug) {
+        for (i = 0; i < dontEnumsLength; i++) {
+          if (hasOwnProperty.call(obj, dontEnums[i])) {
+            result.push(dontEnums[i]);
+          }
+        }
+      }
+      return result;
+    };
+  }());
+}
+
+// Production steps of ECMA-262, Edition 5, 15.4.4.19
+// Reference: http://es5.github.io/#x15.4.4.19
+if (!Array.prototype.map) {
+
+  Array.prototype.map = function(callback, thisArg) {
+
+    var T, A, k;
+
+    if (this == null) {
+      throw new TypeError(' this is null or not defined');
+    }
+
+    // 1. Let O be the result of calling ToObject passing the |this| 
+    //    value as the argument.
+    var O = Object(this);
+
+    // 2. Let lenValue be the result of calling the Get internal 
+    //    method of O with the argument "length".
+    // 3. Let len be ToUint32(lenValue).
+    var len = O.length >>> 0;
+
+    // 4. If IsCallable(callback) is false, throw a TypeError exception.
+    // See: http://es5.github.com/#x9.11
+    if (typeof callback !== 'function') {
+      throw new TypeError(callback + ' is not a function');
+    }
+
+    // 5. If thisArg was supplied, let T be thisArg; else let T be undefined.
+    if (arguments.length > 1) {
+      T = thisArg;
+    }
+
+    // 6. Let A be a new array created as if by the expression new Array(len) 
+    //    where Array is the standard built-in constructor with that name and 
+    //    len is the value of len.
+    A = new Array(len);
+
+    // 7. Let k be 0
+    k = 0;
+
+    // 8. Repeat, while k < len
+    while (k < len) {
+
+      var kValue, mappedValue;
+
+      // a. Let Pk be ToString(k).
+      //   This is implicit for LHS operands of the in operator
+      // b. Let kPresent be the result of calling the HasProperty internal 
+      //    method of O with argument Pk.
+      //   This step can be combined with c
+      // c. If kPresent is true, then
+      if (k in O) {
+
+        // i. Let kValue be the result of calling the Get internal 
+        //    method of O with argument Pk.
+        kValue = O[k];
+
+        // ii. Let mappedValue be the result of calling the Call internal 
+        //     method of callback with T as the this value and argument 
+        //     list containing kValue, k, and O.
+        mappedValue = callback.call(T, kValue, k, O);
+
+        // iii. Call the DefineOwnProperty internal method of A with arguments
+        // Pk, Property Descriptor
+        // { Value: mappedValue,
+        //   Writable: true,
+        //   Enumerable: true,
+        //   Configurable: true },
+        // and false.
+
+        // In browsers that support Object.defineProperty, use the following:
+        // Object.defineProperty(A, k, {
+        //   value: mappedValue,
+        //   writable: true,
+        //   enumerable: true,
+        //   configurable: true
+        // });
+
+        // For best browser support, use the following:
+        A[k] = mappedValue;
+      }
+      // d. Increase k by 1.
+      k++;
+    }
+
+    // 9. return A
+    return A;
+  };
+}
+//***************************************************************************************
+//EXTENSIONS
+//***************************************************************************************
 
 // DESCRIPTION:
 //  Improved version of the built-in "Export Layers To Files" script:
@@ -108,12 +339,13 @@ const TrimPrefType = {
 const ExportLayerTarget = {
 	ALL_LAYERS: 1,
 	VISIBLE_LAYERS: 2,
-	SELECTED_LAYERS: 3,		// Export selection, leave the rest as is, visibility for parent groups will be forced.
-	SELECTED_GROUPS: 4,
-	
+	SELECTED_LAYERS: 3,
+    CUSTOM: 4,
+    // Export selection, leave the rest as is, visibility for parent groups will be forced.
+
 	values: function()
 	{
-		return [this.ALL_LAYERS, this.VISIBLE_LAYERS, this.SELECTED_LAYERS, this.SELECTED_GROUPS];
+		return [this.ALL_LAYERS, this.VISIBLE_LAYERS, this.SELECTED_LAYERS, this.CUSTOM];
 	},
 	
 	forIndex: function(index) 
@@ -141,8 +373,7 @@ const DEFAULT_SETTINGS = {
 	trim: app.stringIDToTypeID("trim"),
 	exportBackground: app.stringIDToTypeID("exportBackground"),
 	fileType: app.stringIDToTypeID("fileType"),
-	layerFilter: app.stringIDToTypeID("layerFilter"),
-	groupFilter: app.stringIDToTypeID("groupFilter"),
+    imageSize: app.stringIDToTypeID("imageSize"),
 };
 
 //
@@ -179,23 +410,34 @@ function main()
 	prefs = new Object();
 	prefs.format = "";
 	prefs.fileExtension = "";
+
+    var folderName = app.activeDocument.name;
+    folderName = folderName.replace(/\.\w+$/, "");
+    
 	try {
-		prefs.filePath = app.activeDocument.path;
+		prefs.filePath = new File(app.activeDocument.path + "/" + folderName);
 	}
 	catch (e) {
-		prefs.filePath = Folder.myDocuments;
+		prefs.filePath = new File(Folder.myDocuments + "/" + folderName);
 	}
+
+    var newFolder = new Folder(prefs.filePath);
+    
+    if (!newFolder.exists) 
+    {
+        newFolder.create();
+    }
+    
 	prefs.formatArgs = null;
-	prefs.exportLayerTarget = ExportLayerTarget.ALL_LAYERS;
+	prefs.exportLayerTarget = ExportLayerTarget.CUSTOM;
 	prefs.outputPrefix = "";
 	prefs.naming = FileNameType.AS_LAYERS_NO_EXT;
 	prefs.namingLetterCase = LetterCase.KEEP;
 	prefs.replaceSpaces = true;
 	prefs.bgLayer = false;
 	prefs.trim = TrimPrefType.DONT_TRIM;
-	prefs.layerFilter = "";
-	prefs.groupFilter = "";
-
+     prefs.imageSize = 100;    
+    
 	userCancelled = false;
 
 	// create progress bar
@@ -221,7 +463,12 @@ function main()
 	// show dialogue
 	if (showDialog()) {
 		env.documentCopy = app.activeDocument.duplicate();
-
+        
+        if (prefs.imageSize != 100)
+        {
+                changeImageSize (prefs.imageSize);
+        }
+    
 		// collect layers
 		profiler.resetLastTime();
 		var collected = collectLayers(progressBarWindow);
@@ -292,12 +539,35 @@ function exportLayers(exportLayerTarget, progressBarWindow)
 		// Bg layer is redundant since everything else outside the selection is essentially a background/foreground.
 		prefs.bgLayer = false;
 		break;
-		
+    case ExportLayerTarget.CUSTOM:
+            for (var i = 0; i < layers.length; ++i)
+            {
+                layers[i].layer.visible = false;
+            }
+    
+            layersToExport = removeIf(layers, function(item)
+            {
+              return item.layer.name[0] == "_";
+            });
+            
+            layersToMerge = groupBy(layersToExport, function(item)
+            {
+              return item.layer.name.split(/[\\\/\|<>\ \_\,\.\-\s]/)[0];
+            });
+            
+            layersToExport = getMergedLayers (layersToMerge);
+            
+            for (var i = 0; i < layersToExport.length; ++i)
+            {
+                layersToExport[i].layer.visible = true;
+            }
+        
+           break;
 	default:
 		layersToExport = layers;
 		break;
 	}
-
+    
 	const count = prefs.bgLayer ? layersToExport.length - 1 : layersToExport.length;
 	
 	if (count < 1) {
@@ -316,63 +586,101 @@ function exportLayers(exportLayerTarget, progressBarWindow)
 		}
 	}
 	else {
-		if (progressBarWindow) {
-			showProgressBar(progressBarWindow, "Exporting 1 of " + count + "...", count);
-		}
-		var filteredLayers = removeIf(layersToExport, function(item)
-		{
-		  return item.layer.name.substring(0,1) == "_";
-		});
-		var layersToExportGroupedByName = groupBy(filteredLayers, function(item)
-		{
-		  return item.layer.name.split(/[\\\/\|<>\ \_\,\.\-]/)[0];
-		});
-		
-		for (var j = 0; j < layersToExportGroupedByName.length; ++j) {
-			var activeLayers = layersToExportGroupedByName[j];
-			
-			// Single trim of all layers combined.
+		// Single trim of all layers combined.
+		if (prefs.trim == TrimPrefType.COMBINED) {
 			const UPDATE_NUM = 20;
 			if (progressBarWindow) {
-				var stepCount = count / UPDATE_NUM + 1;
+				var stepCount = (exportLayerTarget == ExportLayerTarget.ALL_LAYERS) ? count / UPDATE_NUM + 1 : 1;
 				showProgressBar(progressBarWindow, "Trimming...", stepCount);
 			}
-			
-			// Turn off all layers when exporting all layers - even seemingly invisible ones.
-			// When visibility is switched, the parent group becomes visible and a previously invisible child may become visible by accident.
-			for (var i = 0; i < count; ++i) {
-				layersToExport[i].layer.visible = indexOf(activeLayers, layersToExport[i]) > -1;
-				if (progressBarWindow && (i % UPDATE_NUM == 0)) {
-					updateProgressBar(progressBarWindow);
-					repaintProgressBar(progressBarWindow);
-					if (userCancelled) {
-						progressBarWindow.hide();
-						return retVal;
+
+			if (exportLayerTarget == ExportLayerTarget.ALL_LAYERS) {
+				// For combined trim across all layers, make all layers visible.
+				for (var i = 0; i < count; ++i) {
+					makeVisible(layersToExport[i]);
+
+					if (progressBarWindow && (i % UPDATE_NUM == 0)) {
+						updateProgressBar(progressBarWindow);
+						repaintProgressBar(progressBarWindow);
+						if (userCancelled) {
+							progressBarWindow.hide();
+							return retVal;
+						}
 					}
 				}
 			}
-			
+
 			if (prefs.bgLayer) {
 				layersToExport[count].layer.visible = false;
 			}
-			//Trim
+
 			doc.trim(TrimType.TRANSPARENT);
-			
-			
-			if (prefs.bgLayer) {	
-				makeVisible(layersToExport[count]);
+		}
+
+		if (progressBarWindow) {
+			showProgressBar(progressBarWindow, "Exporting 1 of " + count + "...", count);
+		}
+
+		// Turn off all layers when exporting all layers - even seemingly invisible ones.
+		// When visibility is switched, the parent group becomes visible and a previously invisible child may become visible by accident.
+		for (var i = 0; i < count; ++i) {
+			layersToExport[i].layer.visible = false;
+		}
+		if (prefs.bgLayer) {
+			makeVisible(layersToExport[count]);
+		}
+
+		var countDigits = 0;
+		if (prefs.naming != FileNameType.AS_LAYERS) {
+			countDigits = ("" + count).length;
+		}
+
+		// export layers
+		for (var i = 0; i < count; ++i) {
+			var layer = layersToExport[i].layer;
+
+			var fileName;
+			switch (prefs.naming) {
+
+			case FileNameType.AS_LAYERS_NO_EXT:
+				fileName = makeFileNameFromLayerName(layer, true);
+				break;
+
+			case FileNameType.AS_LAYERS:
+				fileName = makeFileNameFromLayerName(layer, false);
+				break;
+
+			case FileNameType.INDEX_ASC:
+				fileName = makeFileNameFromIndex(count - i, countDigits);
+				break;
+
+			case FileNameType.INDEX_DESC:
+				fileName = makeFileNameFromIndex(i + 1, countDigits);
+				break;
 			}
-			
-			
-			var layer = activeLayers[0].layer;
-			
-			var fileName = makeValidFileName(layer.name.split(/[\\\/\|<>\ \_\,\.\-]/)[0], prefs.replaceSpaces);
-			fileName = getUniqueFileName(fileName);
 
 			if (fileName) {
-				saveImage(fileName);
-				++retVal.count;
-				//if (prefs.trim == TrimPrefType.INDIVIDUAL) { undo(doc); }
+				if ((prefs.trim != TrimPrefType.INDIVIDUAL) || ((layer.bounds[0] < layer.bounds[2]) && ((layer.bounds[1] < layer.bounds[3])))) { // skip empty layers when trimming
+					makeVisible(layersToExport[i]);
+
+					if (prefs.trim == TrimPrefType.INDIVIDUAL) {
+						try {
+							doc.crop(layer.bounds);
+						}
+						catch (e) {
+							doc.trim(TrimType.TRANSPARENT);
+						}
+					}
+
+					saveImage(fileName);
+					++retVal.count;
+
+					if (prefs.trim == TrimPrefType.INDIVIDUAL) {
+						undo(doc);
+					}
+
+					layer.visible = false;
+				}
 			}
 			else {
 				retVal.error = true;
@@ -459,9 +767,10 @@ function getUniqueFileName(fileName)
 		ext = ext.toUpperCase();
 	}
 	fileName = prefs.filePath + "/" + fileName;
-
+    
+    return File(fileName + ext);
 	// Check if the file already exists. In such case a numeric suffix will be added to disambiguate.
-	var uniqueName = fileName;
+	/*var uniqueName = fileName;
 	for (var i = 1; i <= 100; ++i) {
 		var handle = File(uniqueName + ext);
 		if (handle.exists) {
@@ -473,6 +782,7 @@ function getUniqueFileName(fileName)
 	}
 
 	return false;
+    */
 }
 
 function forEachLayer(inCollection, doFunc, result, traverseInvisibleSets)
@@ -626,7 +936,7 @@ function repaintProgressBar(win, force /* = false*/)
 function showDialog()
 {
 	// read dialog resource
-	var rsrcFile = new File(env.scriptFileDirectory + "/dialog.json");
+	var rsrcFile = new File(env.scriptFileDirectory + "/dialog_custom.json");
 	var rsrcString = loadResource(rsrcFile);
 	if (! rsrcString) {
 		return false;
@@ -665,6 +975,10 @@ function showDialog()
 		prefs.exportLayerTarget = ExportLayerTarget.SELECTED_LAYERS;
 		dlg.funcArea.content.cbBgLayer.enabled = false;
 		dlg.funcArea.content.cbBgLayer.value = false;
+	};
+    dlg.funcArea.content.grpLayers.radioLayersCus.onClick = function() {
+		prefs.exportLayerTarget = ExportLayerTarget.CUSTOM;
+        dlg.funcArea.content.cbBgLayer.enabled = (layerCount > 1);
 	};
 	dlg.funcArea.content.grpLayers.radioLayersVis.enabled = (visibleLayerCount > 0);
 	dlg.funcArea.content.grpLayers.radioLayersSel.enabled = (selectedLayerCount > 0);
@@ -716,11 +1030,6 @@ function showDialog()
 		this.text = makeValidFileName(this.text, prefs.replaceSpaces);
 	};
 
-	// layer filter
-	//dlg.funcArea.content.grpLayerFilter.editPrefix.onChange = function() {
-	//	this.text = this.text;
-	//};
-
 	// file naming options
 	dlg.funcArea.content.grpNaming.drdNaming.selection = 0;
 	dlg.funcArea.content.grpLetterCase.drdLetterCase.selection = 0;
@@ -744,19 +1053,11 @@ function showDialog()
 			prefs.outputPrefix += " ";
 		}
 
-		prefs.layerFilter = dlg.funcArea.content.grpLayerFilter.editPrefix.text;
-		if (prefs.layerFilter.length > 0) {
-			prefs.layerFilter += " ";
-		}
-
-		prefs.groupFilter = dlg.funcArea.content.grpGroupFilter.editPrefix.text;
-		if (prefs.groupFilter.length > 0) {
-			prefs.groupFilter += " ";
-		}
-
 		prefs.naming = FileNameType.forIndex(dlg.funcArea.content.grpNaming.drdNaming.selection.index);
 		prefs.namingLetterCase = LetterCase.forIndex(dlg.funcArea.content.grpLetterCase.drdLetterCase.selection.index);
 		prefs.trim = TrimPrefType.forIndex(dlg.funcArea.content.grpTrim.drdTrim.selection.index);
+         prefs.imageSize = parseFloat(dlg.funcArea.content.grpSize.drdSize.text);
+        
 		var cbBgLayer = dlg.funcArea.content.cbBgLayer;
 		prefs.bgLayer = (cbBgLayer.value && cbBgLayer.enabled);
 
@@ -800,11 +1101,11 @@ function applySettings(dlg, formatOpts)
 	with (dlg.funcArea.content) {
 		// Common settings
 		
-		var destFolder = new Folder(settings.destination);
+		/*var destFolder = new Folder(settings.destination);
 		if (destFolder.exists) {
 			grpDest.txtDest.text = destFolder.fsName;
 			prefs.filePath = destFolder;
-		}
+		}*/
 		
 		switch (settings.exportLayerTarget) {
 		
@@ -834,12 +1135,9 @@ function applySettings(dlg, formatOpts)
 		grpPrefix.editPrefix.text = settings.outputPrefix;
 		grpPrefix.editPrefix.notify("onChange");
 		
-		grpLayerFilter.editPrefix.text = settings.layerFilter;
-		grpLayerFilter.editPrefix.notify("onChange");
-
-		grpGroupFilter.editPrefix.text = settings.groupFilter;
-		grpGroupFilter.editPrefix.notify("onChange");
-		
+         grpSize.drdSize.text = settings.imageSize;
+		grpSize.drdSize.notify("onChange");
+        
 		var drdTrimIdx = TrimPrefType.getIndex(settings.trim);
 		grpTrim.drdTrim.selection = (drdTrimIdx >= 0) ? drdTrimIdx : 0;
 		
@@ -892,9 +1190,7 @@ function saveSettings(dlg, formatOpts)
 		desc.putInteger(DEFAULT_SETTINGS.trim, TrimPrefType.forIndex(grpTrim.drdTrim.selection.index));
 		desc.putBoolean(DEFAULT_SETTINGS.exportBackground, cbBgLayer.value);
 		desc.putString(DEFAULT_SETTINGS.fileType, formatOpts[grpFileType.drdFileType.selection.index].opt.type);
-
-		desc.putString(DEFAULT_SETTINGS.layerFilter, grpLayerFilter.editPrefix.text);
-		desc.putString(DEFAULT_SETTINGS.groupFilter, grpGroupFilter.editPrefix.text);		
+         desc.putString(DEFAULT_SETTINGS.imageSize, grpSize.drdSize.text);
 		// per file format
 		
 		for (var i = 0; i < formatOpts.length; ++i) {
@@ -932,10 +1228,7 @@ function getSettings(formatOpts)
 			trim: desc.getInteger(DEFAULT_SETTINGS.trim), 
 			exportBackground: desc.getBoolean(DEFAULT_SETTINGS.exportBackground),
 			fileType: desc.getString(DEFAULT_SETTINGS.fileType),
-
-			layerFilter: desc.getString(DEFAULT_SETTINGS.layerFilter),
-			groupFilter: desc.getString(DEFAULT_SETTINGS.groupFilter),
-
+             imageSize: desc.getString(DEFAULT_SETTINGS.imageSize),
 			// per file format filled below
 			
 			// format: []
@@ -2192,21 +2485,6 @@ function formatString(text)
 	});
 }
 
-
-function removeIf(array, fun)
-{
-	var res = [];
-	for (var i = 0; i < array.length; ++i) {
-		var val = array[i];
-		if (f(val)) {
-			res.push(val);
-		}
-	}
-	
-	return res;
-}
-
-
 function indexOf(array, element)
 {
 	var index = -1;
@@ -2285,15 +2563,79 @@ function defineProfilerMethods()
 function groupBy( array , f )
 {
   var groups = {};
+    
   array.forEach( function( o )
   {
-    var group = JSON.stringify( f(o) );
+    var group = f(o);
     groups[group] = groups[group] || [];
     groups[group].push( o );  
   });
-  return Object.keys(groups).map( function( group )
+  
+    return groups;
+  
+  /*return Object.keys(groups).map( function( group )
   {
     return groups[group]; 
-  })
+  });*/
 }
 
+function removeIf(array, fun)
+{
+	var res = [];
+    
+	for (var i = 0; i < array.length; ++i) {
+		var val = array[i];
+		if (!fun(val)) {
+			res.push(val);
+		}
+	}
+	
+	return res;
+}
+
+function getMergedLayers(layersToMerge)
+{
+    var result = [];
+    
+    for (var key in layersToMerge)
+    {
+        var layers = layersToMerge[key];
+    
+        if (layers.length > 1)
+        {
+            var mergedLayer = app.activeDocument.layerSets.add();
+            mergedLayer.name = key;
+            
+            for (var i = layers.length - 1; i >= 0; --i)
+            {
+                layers[i].layer.duplicate(mergedLayer, ElementPlacement.INSIDE);
+            }
+        
+            result.push({ layer : mergedLayer.merge(), parent : null});
+        }
+        else 
+        {
+            result.push(layers[0]);
+        }
+    }
+    
+    return result;
+}
+
+function changeImageSize(size)
+{
+    var idImgS = charIDToTypeID( "ImgS" );
+    var desc38 = new ActionDescriptor();
+    var idWdth = charIDToTypeID( "Wdth" );
+    var idPrc = charIDToTypeID( "#Prc" );
+    desc38.putUnitDouble( idWdth, idPrc, size );
+    var idscaleStyles = stringIDToTypeID( "scaleStyles" );
+    desc38.putBoolean( idscaleStyles, true );
+    var idCnsP = charIDToTypeID( "CnsP" );
+    desc38.putBoolean( idCnsP, true );
+    var idIntr = charIDToTypeID( "Intr" );
+    var idIntp = charIDToTypeID( "Intp" );
+    var idbicubicAutomatic = stringIDToTypeID( "bicubicAutomatic" );
+    desc38.putEnumerated( idIntr, idIntp, idbicubicAutomatic );
+    executeAction( idImgS, desc38, DialogModes.NO );
+}
