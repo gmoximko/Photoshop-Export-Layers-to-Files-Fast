@@ -420,13 +420,6 @@ function main()
 	catch (e) {
 		prefs.filePath = new File(Folder.myDocuments + "/" + folderName);
 	}
-
-    var newFolder = new Folder(prefs.filePath);
-    
-    if (!newFolder.exists) 
-    {
-        newFolder.create();
-    }
     
 	prefs.formatArgs = null;
 	prefs.exportLayerTarget = ExportLayerTarget.CUSTOM;
@@ -464,9 +457,16 @@ function main()
 	if (showDialog()) {
 		env.documentCopy = app.activeDocument.duplicate();
         
+        var newFolder = new Folder(prefs.filePath);
+    
+        if (!newFolder.exists) 
+        {
+            newFolder.create();
+        }
+        
         if (prefs.imageSize != 100)
         {
-                changeImageSize (prefs.imageSize);
+            changeImageSize (prefs.imageSize);
         }
     
 		// collect layers
