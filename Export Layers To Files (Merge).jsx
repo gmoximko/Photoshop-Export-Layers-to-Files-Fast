@@ -559,10 +559,23 @@ function exportLayers(exportLayerTarget, progressBarWindow)
             {
               return item == null || item.layer.name[0] == "_" || item.layer.grouped;
             });
-        
+            
+            var counter = {};
+            counter.count = 0;
+            
             layersToMerge = groupBy(layersToExport, function(item)
             {
-              return item.layer.name.split(/[\\\/\|<>\ \_\,\.\-\s]/)[0];
+                var str = item.layer.name.split(/[\\\/\|<>\ \_\,\.\-\s]/);
+                
+                if (str.length > 1) 
+                {
+                    return str[0];
+                }
+                else 
+                {
+                    item.layer.name += counter.count++;
+                    return item.layer.name;
+                }
             });
             
             layersToExport = getMergedLayers (layersToMerge);
@@ -2574,7 +2587,7 @@ function groupBy( array , f )
 {
   var groups = {};
     
-  array.forEach( function( o )
+  array.forEach( function(o)
   {
     var group = f(o);
     groups[group] = groups[group] || [];
