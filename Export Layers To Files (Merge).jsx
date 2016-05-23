@@ -540,16 +540,26 @@ function exportLayers(exportLayerTarget, progressBarWindow)
 		prefs.bgLayer = false;
 		break;
     case ExportLayerTarget.CUSTOM:
+            for (var i = 0; i < layers.length; ++i) { layers[i].layer.visible = true; }
+            
             for (var i = 0; i < layers.length; ++i)
             {
-                layers[i].layer.visible = false;
+                if (layers[i].layer.grouped && i < layers.length - 1)
+                {
+                    layers[i].layer.merge();
+                    layers[i] = null;
+                }
+                else
+                {
+                    layers[i].layer.visible = false;
+                }
             }
-    
+            
             layersToExport = removeIf(layers, function(item)
             {
-              return item.layer.name[0] == "_";
+              return item == null || item.layer.name[0] == "_" || item.layer.grouped;
             });
-            
+        
             layersToMerge = groupBy(layersToExport, function(item)
             {
               return item.layer.name.split(/[\\\/\|<>\ \_\,\.\-\s]/)[0];
