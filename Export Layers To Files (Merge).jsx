@@ -565,7 +565,7 @@ function exportLayers(exportLayerTarget, progressBarWindow)
             
             layersToMerge = groupBy(layersToExport, function(item)
             {
-                var str = item.layer.name.split(/[\\\/\|<>\ \_\,\.\-\s]/);
+                var str = item.layer.name.split(/[\\\/\|<>\ \,\.\-\s]/);
                 
                 if (str.length > 1) 
                 {
